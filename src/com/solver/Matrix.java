@@ -6,13 +6,14 @@ import java.util.Scanner;
 
 public class Matrix {
 
-    private final String filepathIn;
-    private final String filepathOut;
-    double [][] system;
-    int [] listOfColumns;  //будем использовать listOfColumns для фиксации перестановок столбцов
-    private int variables;
-    private int equations;
-    private String solution = "";
+    private String filepathIn;
+    protected String filepathOut;
+    protected String[][] commonMatrix;
+    protected int [] listOfColumns;
+    protected int variables;
+    protected int equations;
+    boolean complexNumbers = false;
+    protected String solution = "no";
 
     Matrix(String filepathIn, String filepathOut) {
         this.filepathIn = filepathIn;
@@ -20,19 +21,36 @@ public class Matrix {
         setMatrix();
     }
 
+    //конструктор для ComplexMatrix и SimpleMatrix
+    public Matrix(String filepathOut, String [][] commonMatrix, int [] listOfColumns, int variables, int equations, String solution) {
+        this.filepathOut = filepathOut;
+        this.commonMatrix = commonMatrix;
+        this.listOfColumns = listOfColumns;
+        this.variables = variables;
+        this.equations = equations;
+        this.solution = solution;
+    }
+
+
     void setMatrix() {
         File equationsFromFile = new File(filepathIn);
-        try (Scanner scan = new Scanner(equationsFromFile)) {
-            if (scan.hasNext()) {
-                variables = scan.nextInt();
-                equations = scan.nextInt();
-                listOfColumns = new int[variables];
-                system = new double[equations][variables + 1];
-            }
 
-            for (int i = 0; i < system.length; i++) {
-                for (int k = 0; k < system[i].length; k++) {
-                    system[i][k] = scan.nextDouble();
+        try (Scanner scan = new Scanner(equationsFromFile)) {
+            String [] input = scan.nextLine().split(" ");
+            variables = Integer.parseInt(input[0]);
+            equations = Integer.parseInt(input[1]);
+            listOfColumns = new int[variables];
+            commonMatrix = new String[equations][variables + 1];
+
+            for (int i = 0; i < commonMatrix.length; i++) {
+                input = scan.nextLine().split(" ");
+                for (int k = 0; k < commonMatrix[i].length; k++) {
+                    commonMatrix[i][k] = input[k];
+                    if (commonMatrix[i][k].matches("-?[0-9]+(\\.[0-9]+)?[+-][0-9]*(\\.[0-9]*)?i")) {
+                        complexNumbers = true;
+                    } else if (commonMatrix[i][k].matches("[+-]?[0-9]*(\\.[0-9]*)?i")) {
+                        complexNumbers = true;
+                    }
                 }
             }
         }catch (FileNotFoundException e) {
@@ -40,33 +58,37 @@ public class Matrix {
         }
     }
 
-    void getMatrix() {
-        for (double[] i : system) {
-            for (double k : i) {
-                System.out.printf("%5.1f", k);
-            }
-            System.out.println();
-        }
-        System.out.println();
+
+
+    void solveComplexMatrix() {
+        ComplexMatrix complexMatrix = new ComplexMatrix(filepathOut, commonMatrix, listOfColumns, variables, equations, solution);
+        complexMatrix.setMatrix();
+        complexMatrix.getMatrix();
+
+        complexMatrix.executeStraightRun();
+        CheckingOfMatrix checkingOfMatrix = new CheckingOfMatrix(complexMatrix);
+        checkingOfMatrix.checkMatrix();
+        complexMatrix.executeReturnRun();
+        complexMatrix.editResult();
+        complexMatrix.getMatrix();
+
+        WritingToFile writingToFile = new WritingToFile(complexMatrix);
+        writingToFile.writeToFile();
     }
 
-    int getVariables() {
-        return variables;
-    }
+    void solveSimpleMatrix() {
+        SimpleMatrix simpleMatrix = new SimpleMatrix(filepathOut, commonMatrix, listOfColumns, variables, equations, solution);
+        simpleMatrix.setMatrix();
+        simpleMatrix.getMatrix();
 
-    int getEquations() {
-        return equations;
-    }
+        simpleMatrix.executeStraightRun();
+        CheckingOfMatrix checkingOfMatrix = new CheckingOfMatrix(simpleMatrix);
+        checkingOfMatrix.checkMatrix();
+        simpleMatrix.executeReturnRun();
+        simpleMatrix.editResult();
+        simpleMatrix.getMatrix();
 
-    String getFilepathOut() {
-        return filepathOut;
-    }
-
-    String getSolution() {
-        return solution;
-    }
-
-    void setSolution(String solution) {
-        this.solution = solution;
+        WritingToFile writingToFile = new WritingToFile(simpleMatrix);
+        writingToFile.writeToFile();
     }
 }

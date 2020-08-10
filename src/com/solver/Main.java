@@ -3,7 +3,7 @@ package com.solver;
 
 public class Main {
 
-    public static void main(String[] args)  {
+    public static void main(String[] args) {
         //check and read a file
         String in = "";
         String out = "";
@@ -16,10 +16,18 @@ public class Main {
                     out = args[i + 1];
                 }
             }
+            Controller controller = new Controller();
             Matrix matrix = new Matrix(in, out);
-            matrix.getMatrix();
-            Solver solver = new Solver(matrix);
-            solver.solveMatrix();
+            if (matrix.complexNumbers) {
+                Command solveComplexMatrix = new SolveComplexMatrixCommand(matrix);
+                controller.setCommand(solveComplexMatrix);
+                controller.executeCommand();
+            }else{
+                Command solveSimpleMatrix = new SolveSimpleMatrixCommand(matrix);
+                controller.setCommand(solveSimpleMatrix);
+                controller.executeCommand();
+            }
+
         } else {
             System.out.println("You didn't input the filepath.");
         }
